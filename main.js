@@ -197,4 +197,8 @@ const main = async () => {
   return { cmds, config };
 };
 
+process.on('unhandledRejection', (reason) => {
+    console.error('💥 Unhandled Rejection:', reason);
+});
+
 module.exports = main();
