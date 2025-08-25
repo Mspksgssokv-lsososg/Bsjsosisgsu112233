@@ -1,0 +1,11 @@
+emptyCommand=The command you are using does not exist, type {prefix}help to see all available commands
+commandNotFound=Command "{commandName}" does not exist, type help to see all available commands
+adminGroupOnly=❌ | The command "{commandName}" can only be used by group admins.
+notGroupAdmin=❌ | You are not a group admin, so you cannot use this command.
+adminVerificationFailed=❌ | Admin verification failed. Please try again.
+notBotAdmin=❌ | Only bot admins can use this command.
+notVip=❌ | Only VIP members can use this command.
+groupOnly=❌ | This command can only be used in a group chat.
+privateOnly=❌ | This command can only be used in a private chat.
+cooldown=⏳ | Please wait {timeLeft} seconds before using this command again.
+commandExecutionError=❌ | An error occurred while executing the command "{commandName}": {errorMessage}

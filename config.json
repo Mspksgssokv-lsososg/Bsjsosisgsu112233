@@ -1,0 +1,39 @@
+{
+  "devMode": true,
+  "timeZone": "Asia/Dhaka",
+  "prefix": "/",
+  "symbols": "●",
+  "owner": {
+    "name": "SK-SIDDIK",
+    "facebook": "FACEBOOK_ID",
+    "username": "TG_USERNAME"
+  },
+  "admin": [
+    "6734899387"
+  ],
+  "vip": [
+    "6734899387"
+  ],
+  "loadCmds": true,
+  "loadEvents": true,
+  "groups": {
+    "noAdmin": true,
+    "whitelist": false,
+    "list": [
+      "GROUP_ID1",
+      "GROUP_ID2"
+    ]
+  },
+  "inbox": {
+    "enabled": true
+  },
+  "mongoDB": {
+    "enabled": false,
+    "url": "MONGODB_URL",
+    "dbName": "DATABASE_NAME"
+  },
+  "apiKeys": {
+    "gemini": "",
+    "openai": ""
+  }
+}
