@@ -6,7 +6,7 @@ module.exports = {
     author: "SK-SIDDIK-KHAN"
   },
 
-  onStart: async function ({ bot, msg }) {
+  run: async function ({ bot, msg }) {
     try {
       const chatId = msg.chat.id;
       const newMembers = msg.new_chat_members;
