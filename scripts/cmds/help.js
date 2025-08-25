@@ -15,57 +15,69 @@ module.exports.config = {
 };
 
 module.exports.onStart = async ({ event, args, message, threadsData }) => {
-    const commandFiles = fs.readdirSync(path.join(__dirname, '..', 'cmds')).filter(file => file.endsWith('.js'));
-    const config = require('../../config.json');
-    const thread = await threadsData.getThread(event.chat.id);
-    const prefix = thread?.prefix || '!';
-    let categories = {};
-    let totalCommands = 0;
+    try {
+        // সব কমান্ড ফাইল পড়া
+        const commandFiles = fs.readdirSync(path.join(__dirname, '..', 'cmds')).filter(file => file.endsWith('.js'));
+        const config = require('../../config.json');
 
-    for (const file of commandFiles) {
-        const command = require(path.join(__dirname, '..', 'cmds', file));
-        if (command.config) {
-            const category = command.config.commandCategory || command.config.category || 'OTHER';
-            if (!categories[category]) categories[category] = [];
-            categories[category].push(command.config);
-            totalCommands++;
+        // Telegram এ chat id ঠিকভাবে ধরার জন্য
+        const chatId = event.message?.chat?.id;
+        if (!chatId) {
+            console.log("⚠️ Could not find chat ID in event:", event);
+            return message.reply("Error: Could not detect chat ID.");
         }
-    }
 
-    if (args[0]) {
-        if (args[0] === '-s' && args[1]) {
-            const searchLetter = args[1].toLowerCase();
-            const matchingCommands = Object.values(categories).flat().filter(cmd => cmd.name.startsWith(searchLetter));
-            if (matchingCommands.length === 0) {
-                return message.reply(`No commands found starting with '${searchLetter}'.`);
+        const thread = await threadsData.getThread(chatId);
+        const prefix = thread?.prefix || '!';
+
+        let categories = {};
+        let totalCommands = 0;
+
+        for (const file of commandFiles) {
+            const command = require(path.join(__dirname, '..', 'cmds', file));
+            if (command.config) {
+                const category = command.config.commandCategory || command.config.category || 'OTHER';
+                if (!categories[category]) categories[category] = [];
+                categories[category].push(command.config);
+                totalCommands++;
+            }
+        }
+
+        // যদি help <command> লেখা হয়
+        if (args[0]) {
+            if (args[0] === '-s' && args[1]) {
+                const searchLetter = args[1].toLowerCase();
+                const matchingCommands = Object.values(categories).flat().filter(cmd => cmd.name.startsWith(searchLetter));
+                if (matchingCommands.length === 0) {
+                    return message.reply(`No commands found starting with '${searchLetter}'.`);
+                }
+
+                let searchMessage = `✨ [ Commands Starting with '${searchLetter.toUpperCase()}' ] ✨\n\n`;
+                matchingCommands.forEach(cmd => (searchMessage += `✧ ${cmd.name}\n`));
+                return message.reply(searchMessage);
             }
 
-            let searchMessage = `✨ [ Commands Starting with '${searchLetter.toUpperCase()}' ] ✨\n\n`;
-            matchingCommands.forEach(cmd => (searchMessage += `✧ ${cmd.name}\n`));
-            return message.reply(searchMessage);
-        }
+            const commandName = args[0].toLowerCase();
+            const command = Object.values(categories).flat().find(cmd => cmd.name === commandName || cmd.aliases?.includes(commandName));
 
-        const commandName = args[0].toLowerCase();
-        const command = Object.values(categories).flat().find(cmd => cmd.name === commandName || cmd.aliases?.includes(commandName));
+            if (!command) {
+                return message.reply('Command not found.');
+            }
 
-        if (!command) {
-            return message.reply('Command not found.');
-        }
+            let guide = command?.guide || command?.usages || 'No usage available';
+            guide = guide.replace(/{pn}|{pm}|{p}|{prefix}|{name}/g, prefix + command?.name);
 
-        let guide = command?.guide || command?.usages || 'No usage available';
-        guide = guide.replace(/{pn}|{pm}|{p}|{prefix}|{name}/g, prefix + command?.name);
+            if (args[1] === '-u') {
+                const usageMessage = `📝 Usage for ${command.name}: ${guide}`;
+                return message.reply(usageMessage);
+            }
 
-        if (args[1] === '-u') {
-            const usageMessage = `📝 Usage for ${command.name}: ${guide}`;
-            return message.reply(usageMessage);
-        }
+            if (args[1] === '-a') {
+                const aliasesMessage = `🪶 [ Aliases for ${command.name} ]: ${command.aliases ? command.aliases.join(', ') : 'None'}`;
+                return message.reply(aliasesMessage);
+            }
 
-        if (args[1] === '-a') {
-            const aliasesMessage = `🪶 [ Aliases for ${command.name} ]: ${command.aliases ? command.aliases.join(', ') : 'None'}`;
-            return message.reply(aliasesMessage);
-        }
-
-        let commandInfo = `
+            let commandInfo = `
 ╭──✦ [ Command: ${command.name.toUpperCase()} ]
 ├‣ 📜 Name: ${command.name}
 ├‣ 👤 Credits: ${command?.credits || command?.author || 'Unknown'}
@@ -77,22 +89,27 @@ module.exports.onStart = async ({ event, args, message, threadsData }) => {
 ├‣ ⚜️ Premium: ${command.premium ? 'Yes' : 'No'}
 ╰───────────────◊`;
 
-        return message.reply(commandInfo);
+            return message.reply(commandInfo);
+        }
+
+        // সব কমান্ড লিস্ট দেখানো
+        const page = parseInt(args[0], 10) || 1;
+        const categoryKeys = Object.keys(categories);
+        const totalPages = 1;
+
+        let helpMessage = `✨ [ Guide For Beginners - Page ${page} ] ✨\n\n`;
+
+        for (const category of categoryKeys) {
+            helpMessage += `╭──── [ ${category.toUpperCase()} ]\n`;
+            helpMessage += `│ ✧${categories[category].map(cmd => cmd.name).join(' ✧ ')}\n`;
+            helpMessage += `╰───────────────◊\n`;
+        }
+
+        helpMessage += `\n╭─『 ${config.botName.toUpperCase()} BOT 』\n╰‣ Total commands: ${totalCommands}\n╰‣ Page ${page} of ${totalPages}\n╰‣ A personal Telegram bot ✨\n╰‣ ADMIN: ${config.adminName}\n`;
+
+        return message.reply(helpMessage);
+    } catch (err) {
+        console.error("❌ Error in help command:", err);
+        return message.reply("An error occurred while executing the help command.");
     }
-
-    const page = parseInt(args[0], 10) || 1;
-    const categoryKeys = Object.keys(categories);
-    const totalPages = 1;
-
-    let helpMessage = `✨ [ Guide For Beginners - Page ${page} ] ✨\n\n`;
-
-    for (const category of categoryKeys) {
-        helpMessage += `╭──── [ ${category.toUpperCase()} ]\n`;
-        helpMessage += `│ ✧${categories[category].map(cmd => cmd.name).join(' ✧ ')}\n`;
-        helpMessage += `╰───────────────◊\n`;
-    }
-
-    helpMessage += `\n╭─『 ${config.botName.toUpperCase()} BOT 』\n╰‣ Total commands: ${totalCommands}\n╰‣ Page ${page} of ${totalPages}\n╰‣ A personal Telegram bot ✨\n╰‣ ADMIN: ${config.adminName}\n`;
-
-    return message.reply(helpMessage);
 };
