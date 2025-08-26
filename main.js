@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const { spawn } = require("child_process");
+const express = require("express");
 
 // COLORS
 const c = {
@@ -145,7 +146,7 @@ const manageBotProcess = (scripts, messages, config) => {
     console.log(`${c.yellow}[PROCESS]${c.reset} ${getMessage(messages, "warnings.processTerminated", { script: scripts })}`);
   }
 
-  botProcess = spawn("node", ["--trace-warnings", "--async-stack-traces", scripts], {
+  botProcess = spawn("node", [scripts], {
     cwd: __dirname,
     stdio: "inherit",
     shell: true,
@@ -154,10 +155,14 @@ const manageBotProcess = (scripts, messages, config) => {
 
   botProcess.on("close", (code) => {
     console.log(`${c.yellow}[PROCESS]${c.reset} ${getMessage(messages, "warnings.processExited", { script: scripts, code })}`);
+    console.log(`${c.red}[RESTART]${c.reset} Restarting in 5s...`);
+    setTimeout(() => manageBotProcess(scripts, messages, config), 5000);
   });
 
   botProcess.on("error", (err) => {
     console.error(`${c.red}[PROCESS ERROR]${c.reset} ${getMessage(messages, "errors.processStartFailed", { script: scripts, message: err.message })}`);
+    console.log(`${c.red}[RESTART]${c.reset} Restarting in 5s...`);
+    setTimeout(() => manageBotProcess(scripts, messages, config), 5000);
   });
 };
 
@@ -193,12 +198,16 @@ const main = async () => {
 
   // Start bot process
   manageBotProcess("bot/main.js", messages, config);
-
-  return { cmds, config };
 };
+
+// Keep server alive (for Render/Heroku 24/7)
+const app = express();
+const PORT = process.env.PORT || 3000;
+app.get("/", (req, res) => res.send("🤖 Bot is running 24/7 ✅"));
+app.listen(PORT, () => console.log(`🌍 Web server running at http://localhost:${PORT}`));
 
 process.on('unhandledRejection', (reason) => {
     console.error('💥 Unhandled Rejection:', reason);
 });
 
-module.exports = main();
+main();
