@@ -200,8 +200,7 @@ const main = async () => {
 };
 
 process.on('unhandledRejection', (reason) => {
-  console.error('💥 Unhandled Rejection:', reason);
+    console.error('💥 Unhandled Rejection:', reason);
 });
 
-main();
-module.exports = main;
+module.exports = bot;
