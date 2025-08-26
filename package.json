@@ -4,10 +4,7 @@
   "description": "A simple telegram bot",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js",
-    "restart": "npm run stop && npm run start",
-    "stop": "pkill -f node"
+    "start": "node index.js"
   },
   "author": "SK-SIDDIK-KHAN",
   "license": "ISC",
