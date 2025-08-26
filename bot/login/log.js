@@ -6,7 +6,18 @@ const login = () => {
   const bots = tokens.map(token => new TelegramBot(token, { polling: true }));
   const { listen } = require('../../logger/listen.js');
 
-  bots.forEach(bot => listen(bot));
+  bots.forEach(bot => {
+    listen(bot);
+
+    bot.on("polling_error", (err) => {
+      console.error("⚠️ Polling error:", err.message);
+
+    });
+
+    bot.on("error", (err) => {
+      console.error("🔥 Bot error:", err.message);
+    });
+  });
 
   return bots;
 };
