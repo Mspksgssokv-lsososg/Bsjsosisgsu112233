@@ -136,7 +136,7 @@ const loadEvents = (messages) => {
 };
 
 // ───────────────────────────────
-// BOT PROCESS MANAGER (AUTO-RESTART)
+// BOT PROCESS MANAGER
 // ───────────────────────────────
 let botProcess = null;
 const manageBotProcess = (scripts, messages, config) => {
@@ -154,8 +154,6 @@ const manageBotProcess = (scripts, messages, config) => {
 
   botProcess.on("close", (code) => {
     console.log(`${c.yellow}[PROCESS]${c.reset} ${getMessage(messages, "warnings.processExited", { script: scripts, code })}`);
-    console.log(`${c.cyan}[RESTARTING BOT IN 3s...]${c.reset}`);
-    setTimeout(() => manageBotProcess(scripts, messages, config), 3000); // auto restart
   });
 
   botProcess.on("error", (err) => {
@@ -203,4 +201,4 @@ process.on('unhandledRejection', (reason) => {
     console.error('💥 Unhandled Rejection:', reason);
 });
 
-module.exports = bot;
+module.exports = main();
