@@ -4,7 +4,8 @@
   "description": "A simple telegram bot",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js", 
+    "server": "node index.js" 
   },
   "author": "SK-SIDDIK-KHAN",
   "license": "ISC",
