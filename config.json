@@ -5,8 +5,8 @@
   "symbols": "●",
   "owner": {
     "name": "SK-SIDDIK",
-    "facebook": "FACEBOOK_ID",
-    "username": "TG_USERNAME"
+    "facebook": "https://www.facebook.com/SK.SIDDIK.HERE",
+    "username": "busy1here"
   },
   "admin": [
     "6734899387"
@@ -14,7 +14,7 @@
   "vip": [
     "6734899387"
   ],
-  "botName": "MyTelegramBot",
+  "botName": "SIDDIK-BOT",
   "adminName": "SK-SIDDIK",
   "loadCmds": true,
   "loadEvents": true,
