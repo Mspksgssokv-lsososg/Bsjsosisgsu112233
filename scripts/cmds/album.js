@@ -783,53 +783,48 @@ const categories = {
   ],
 };
 
-const PAGE_SIZE = 11;
+const PAGE_SIZE = 10;
 
 module.exports = {
   config: {
     name: "album",
-    version: "1.0.0",
     author: "SK-SIDDIK-KHAN",
-    countDown: 5,
-    role: 0,
-    category: "user",
+    description: "Send random videos from an album.",
+    category: "media",
+    usage: "/album [page]",
+    usePrefix: true,
   },
 
-  onStart: async function ({ api, event, message, args }) {
+  onStart: async ({ bot, chatId, args, userId }) => {
     const categoryKeys = Object.keys(categories);
     let page = 1;
 
     if (args.length > 0) {
-      const inputPage = parseInt(args[0], 10);
-      if (!isNaN(inputPage) && inputPage > 0) {
-        page = inputPage;
-      }
+      const inputPage = parseInt(args[0]);
+      if (!isNaN(inputPage) && inputPage > 0) page = inputPage;
     }
 
     const totalPages = Math.ceil(categoryKeys.length / PAGE_SIZE);
     if (page > totalPages) {
-      return message.reply(`❌ Page ${page} doesn't exist. Total pages: ${totalPages}`);
+      return bot.sendMessage(chatId, `❌ Page ${page} doesn't exist. Total pages: ${totalPages}`);
     }
 
     const startIndex = (page - 1) * PAGE_SIZE;
     const endIndex = startIndex + PAGE_SIZE;
-
     const currentPageCategories = categoryKeys.slice(startIndex, endIndex);
 
-    let msg =
-      `╭╼|━♡𝐒𝐈𝐃𝐃𝐈𝐊-𝐁𝐎𝐓-𝟎𝟕♡━|╾╮\n\n` +
-      `আপনার পছন্দের ভিডিও দেখতে একটি নাম্বারে রিপ্লাই করুন:\n\n` +
-      `╰╼|━♡𝐒𝐈𝐃𝐃𝐈𝐊-𝐁𝐎𝐓-𝟎𝟕♡━|╾╯\n` +
-      `┏━━━━━━━━━━━━━━━━━┓\n` +
+    let text =
+      `╭─🎬 𝗔𝗹𝗯𝘂𝗺 𝗩𝗶𝗱𝗲𝗼𝘀 ─╮\n\n` +
+      `Reply with a number to select a category:\n\n` +
       currentPageCategories
-        .map((cat, i) => `┣➤ ${startIndex + i + 1}. ${cat.toUpperCase()}`)
+        .map((cat, i) => `┃ ${startIndex + i + 1}. ${cat.toUpperCase()}`)
         .join("\n") +
-      `\n┗━━━━[𝗦𝗜𝗗𝗗𝗜𝗞-𝗕𝗢𝗧]━━━━┛\n` +
-      `\n☽━━━━━━━━━━━━━━━━━━☾\n           🔰 | 𝐏𝐚𝐠𝐞 [ ${page} / ${totalPages} ] 🔰\n☽━━━━━━━━━━━━━━━━━━☾`;
+      `\n\n╰─Page [${page} / ${totalPages}]─╯`;
 
-    const sentMsg = await bot.sendMessage(chatId, msg);
+    const sentMsg = await bot.sendMessage(chatId, text);
 
     const replyListener = async (replyMsg) => {
+      // Only consider replies to this menu and from same user
       if (
         replyMsg.chat.id === chatId &&
         replyMsg.reply_to_message?.message_id === sentMsg.message_id &&
@@ -852,13 +847,13 @@ module.exports = {
           fs.mkdirSync(path.dirname(filePath), { recursive: true });
         }
 
-        const loadingMsg = await bot.sendMessage(chatId, `⏳ LOADING ${category.toUpperCase()}...`);
+        const loadingMsg = await bot.sendMessage(chatId, `⏳ Loading ${category.toUpperCase()}...`);
 
         try {
           if (!fs.existsSync(filePath)) await downloadFile(filePath, videoURL);
 
           await bot.sendVideo(chatId, fs.createReadStream(filePath), {
-            caption: `✅ HERE'S YOUR ${category.toUpperCase()}`,
+            caption: `✅ Here's your ${category.toUpperCase()}`,
           });
 
           await bot.deleteMessage(chatId, loadingMsg.message_id);
