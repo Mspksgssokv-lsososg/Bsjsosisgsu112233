@@ -7,10 +7,6 @@ const path = require("path");
 const RESTART_CODE = 0;
 const RESTART_FILE = path.join(__dirname, "../../restart.json");
 
-/**
- * Restart bot safely
- * @param {string} chatId - optional chatId to notify on restart
- */
 function restartBot(chatId) {
   if (chatId) {
     try {
@@ -23,11 +19,8 @@ function restartBot(chatId) {
   process.exit(RESTART_CODE);
 }
 
-/**
- * Install missing npm modules automatically
- */
 function installAutoModules() {
-  if (global.__autoInstall) return; // prevent multiple installs
+  if (global.__autoInstall) return; 
   global.__autoInstall = true;
 
   const originalRequire = module.constructor.prototype.require;
@@ -36,7 +29,6 @@ function installAutoModules() {
     try {
       return originalRequire.call(this, moduleName);
     } catch (error) {
-      // Only handle missing npm modules (not local files)
       if (
         error.code === "MODULE_NOT_FOUND" &&
         !moduleName.startsWith(".") &&
@@ -61,12 +53,21 @@ function installAutoModules() {
   };
 }
 
-// Exports
-exports.restartBot = restartBot;
-exports.RESTART_FILE = RESTART_FILE;
-exports.install = installAutoModules;
+// **New function exported for main.js**
+function loadScripts() {
+  console.log("Loading scripts...");
+  // এখানে তুমি যে script লোড করতে চাও, তা লিখো
+  // উদাহরণ:
+  // const cmds = require("./commands");
+  // global.config.cmds = cmds;
+}
 
-// Auto-install on first load
+exports.loadScripts = loadScripts; // <-- এটা main.js-এ কল করার জন্য দরকার
+exports.restartBot = restartBot;
+exports.install = installAutoModules;
+exports.RESTART_FILE = RESTART_FILE;
+
+// Auto-install modules
 if (!global.__autoInstall) {
   installAutoModules();
 }
