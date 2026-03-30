@@ -1,73 +1,44 @@
-"use strict";
+const fs = require('fs');
+const path = require('path');
+const { loadScripts, RESTART_FILE } = require('./login/loadScripts');
+const { utils } = require('../func/utils.js');
 
-const { execSync } = require("child_process");
-const fs = require("fs");
-const path = require("path");
+const configPath = path.join(process.cwd(), 'config.json');
+const tokenPath = path.join(process.cwd(), 'token.txt');
 
-const RESTART_CODE = 0;
-const RESTART_FILE = path.join(__dirname, "../../restart.json");
+if (!fs.existsSync(configPath) || !fs.existsSync(tokenPath)) {
+  console.error("Error: config.json or token.txt not found in the root directory.");
+  process.exit(1);
+}
 
-function restartBot(chatId) {
-  if (chatId) {
-    try {
-      fs.writeFileSync(RESTART_FILE, JSON.stringify({ chatId }));
-    } catch (err) {
-      console.error("Failed to write restart file:", err);
+const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+const token = JSON.parse(fs.readFileSync(tokenPath, 'utf8'));
+
+global.config = {
+  ...config,
+  cmds: new Map(),
+  cooldowns: new Map(),
+  replies: new Map(),
+  callbacks: new Map(),
+  events: new Map()
+};
+
+global.token = token;
+global.scripts = utils;
+
+utils();
+
+const { login } = require('./login/log');
+const botInstance = login();
+
+if (fs.existsSync(RESTART_FILE)) {
+  try {
+    const data = JSON.parse(fs.readFileSync(RESTART_FILE, 'utf8'));
+    if (data.chatId) {
+      botInstance.sendMessage(data.chatId, "✅ Bot restarted successfully.");
     }
+  } catch (err) {
+    console.error("Failed to send restart confirmation:", err);
   }
-  console.log("Bot restarting now...");
-  process.exit(RESTART_CODE);
-}
-
-function installAutoModules() {
-  if (global.__autoInstall) return; 
-  global.__autoInstall = true;
-
-  const originalRequire = module.constructor.prototype.require;
-
-  module.constructor.prototype.require = function (moduleName) {
-    try {
-      return originalRequire.call(this, moduleName);
-    } catch (error) {
-      if (
-        error.code === "MODULE_NOT_FOUND" &&
-        !moduleName.startsWith(".") &&
-        !moduleName.startsWith("/")
-      ) {
-        console.log(`NPM module '${moduleName}' not found. Installing...`);
-        try {
-          execSync(`npm install ${moduleName}`, {
-            stdio: "inherit",
-            cwd: process.cwd(),
-          });
-          console.log(`Successfully installed '${moduleName}'. Restarting bot...`);
-          restartBot();
-          return originalRequire.call(this, moduleName);
-        } catch (installError) {
-          console.error(`Failed to install '${moduleName}':`, installError.message);
-          throw installError;
-        }
-      }
-      throw error;
-    }
-  };
-}
-
-// **New function exported for main.js**
-function loadScripts() {
-  console.log("Loading scripts...");
-  // এখানে তুমি যে script লোড করতে চাও, তা লিখো
-  // উদাহরণ:
-  // const cmds = require("./commands");
-  // global.config.cmds = cmds;
-}
-
-exports.loadScripts = loadScripts; // <-- এটা main.js-এ কল করার জন্য দরকার
-exports.restartBot = restartBot;
-exports.install = installAutoModules;
-exports.RESTART_FILE = RESTART_FILE;
-
-// Auto-install modules
-if (!global.__autoInstall) {
-  installAutoModules();
+  fs.unlinkSync(RESTART_FILE);
 }
