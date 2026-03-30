@@ -4,40 +4,38 @@ const { alldown } = require('nayan-media-downloaders');
 module.exports = {
   config: {
     name: "alldown",
-    author: "SK-SIDDIK-KHAN (Styled Fixed)",
+    author: "SK-SIDDIK-KHAN (Auto Fixed)",
     description: "Auto Video Downloader",
     category: "media",
-    usage: "auto",
+    usage: "send any video link",
     usePrefix: false,
   },
 
-  onStart: async ({ bot, chatId, args, messageId }) => {
-    const link = args[0];
+  onStart: async ({ bot, chatId, args, messageId, message }) => {
+    // Try to get link from args first, fallback to message.text
+    let link = args[0];
+    if (!link) {
+      link = message?.text?.match(/https?:\/\/[^\s]+/)?.[0];
+    }
 
-    if (!link || !link.startsWith("http")) {
-      return bot.sendMessage(chatId, "❌ Please provide a valid url");
+    if (!link) {
+      return bot.sendMessage(chatId, "❌ Please send a valid video URL");
     }
 
     let waitMsg;
     try {
       waitMsg = await bot.sendMessage(
         chatId,
-        "⏳ 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗𝗜𝗡𝗚...\n━━━━━━━━━━━━━━━",
+        "⏳ 𝗗𝗼𝘄𝗻𝗹𝗼𝗮𝗱𝗶𝗻𝗴 𝗣𝗹𝗲𝗮𝘀𝗲 𝗪𝗮𝗶𝘁...",
         { reply_to_message_id: messageId }
       );
 
       const res = await alldown(link);
-
-      if (!res || !res.data) {
-        throw new Error("Invalid response from API");
-      }
+      if (!res || !res.data) throw new Error("Invalid response from downloader API");
 
       const data = res.data;
       const videoUrl = data.high || data.low || data.url;
-
-      if (!videoUrl) {
-        throw new Error("No downloadable video found");
-      }
+      if (!videoUrl) throw new Error("No downloadable video found");
 
       const videoTitle = data.title || "No Title Found";
 
@@ -48,20 +46,18 @@ module.exports = {
 
       const replyMarkup = {
         inline_keyboard: [
-          [
-            { text: "📞 CONTACT ADMIN", url: "https://t.me/busy1here" }
-          ]
+          [{ text: "𝗖𝗢𝗡𝗧𝗔𝗖𝗧 𝗡𝗢𝗪", url: "https://t.me/busy1here" }]
         ]
       };
 
       const caption = `
-╭━━━〔 🎬 MEDIA DOWNLOADER 〕━━━╮
+╭─〔 MEDIA DOWNLOADER 〕─╮
 ┃
-┃ 🎬 Title : ${videoTitle}
-┃ ⚡ Status : ✅ Completed
-┃ 💡 Tip : Contact admin if any issue
+┃ 🎬 𝗧𝗶𝘁𝗹𝗲 : ${videoTitle}
+┃ ⚡ 𝗦𝘁𝗮𝘁𝘂𝘀 : ✅ Download Completed
+┃ 💡 𝗧𝗶𝗽 : Contact admin if any issue
 ┃
-╰━━━〔 🤖 SIDDIK BOT 〕━━━╯`;
+╰─〔 SIDDIK-BOT 〕─╯`;
 
       if (waitMsg?.message_id) {
         await bot.deleteMessage(chatId, waitMsg.message_id).catch(() => {});
