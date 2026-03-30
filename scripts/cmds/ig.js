@@ -1,44 +1,48 @@
 module.exports = {
-    config: {
-        name: "slashPost",
-        version: "1.0.0",
-        author: "RAKIB MAHMUD",
-        description: "Send Islamic post on /",
-        category: "utility",
-        prefix: false // auto-run
-    },
+  config: {
+    name: "slashpost",
+    version: "1.0.0",
+    author: "RAKIB MAHMUD",
+    description: "Send Islamic post on /",
+    category: "utility",
+    prefix: false // auto-run on "/"
+  },
 
-    onStart: async function ({ bot, message }) {
-        try {
-            const chatId = message.chat.id;
-            const messageId = message.message_id;
-            const text = message.text || "";
+  onStart: async function ({ bot, message }) {
+    try {
+      const chatId = message.chat.id;
 
-            // শুধু "/" হলে run করবে
-            if (text.trim() !== "/") return;
-
-            const data = [
-                {
-                    caption: "🦋🥀࿐\nহাজারো স্বপ্নের শেষ স্থান কবরস্থান🙂🤲🥀",
-                    img: "https://i.postimg.cc/Y0wvTzr6/images-29.jpg"
-                },
-                {
-                    caption: "আল্লাহর ভালোবাসা পেতে চাও?\nরাসুল (সা:) কে অনুসরণ করো🥰",
-                    img: "https://i.postimg.cc/1Rpnw2BJ/images-28.jpg"
-                }
-            ];
-
-            // র‍্যান্ডম ছবি নির্বাচন
-            const random = data[Math.floor(Math.random() * data.length)];
-
-            // ছবি পাঠানো
-            await bot.sendPhoto(chatId, random.img, {
-                caption: random.caption,
-                reply_to_message_id: messageId
-            });
-
-        } catch (error) {
-            console.error("Error sending photo:", error);
+      const data = [
+        {
+          caption: "🦋🥀࿐\nহাজারো স্বপ্নের শেষ স্থান কবরস্থান🙂🤲🥀",
+          img: "https://i.postimg.cc/Y0wvTzr6/images-29.jpg"
+        },
+        {
+          caption: "আল্লাহর ভালোবাসা পেতে চাও?\nরাসুল (সা:) কে অনুসরণ করো🥰",
+          img: "https://i.postimg.cc/1Rpnw2BJ/images-28.jpg"
         }
+      ];
+
+      // Random image selection
+      const random = data[Math.floor(Math.random() * data.length)];
+
+      // Send photo
+      const sentMsg = await bot.sendPhoto(chatId, random.img, {
+        caption: random.caption
+      });
+
+      // Register reply data for reply.js system
+      if (!global.config.replies) global.config.replies = new Map();
+      global.config.replies.set(sentMsg.message_id, { commandName: "slashpost" });
+
+    } catch (error) {
+      console.error("Error sending photo:", error);
     }
+  },
+
+  onReply: async function ({ bot, chatId, replyMsg, userId }) {
+    await bot.sendMessage(chatId, `🌸 Thanks for replying, user ${userId}!`, {
+      reply_to_message_id: replyMsg.message_id
+    });
+  }
 };
