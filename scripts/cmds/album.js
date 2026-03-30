@@ -814,17 +814,16 @@ module.exports = {
     const currentPageCategories = categoryKeys.slice(startIndex, endIndex);
 
     let text =
-      `╭─🎬 𝗔𝗹𝗯𝘂𝗺 𝗩𝗶𝗱𝗲𝗼𝘀 ─╮\n\n` +
-      `Reply with a number to select a category:\n\n` +
+      `╭─🎬 𝗔𝗹𝗯𝘂𝗺 𝗩𝗶𝗱𝗲𝗼𝘀 ─╮\n` +
+      `┃Reply with a number to select a category:\n` +
       currentPageCategories
         .map((cat, i) => `┃ ${startIndex + i + 1}. ${cat.toUpperCase()}`)
         .join("\n") +
-      `\n\n╰─Page [${page} / ${totalPages}]─╯`;
+      `\n╰─Page [${page} / ${totalPages}]─╯`;
 
     const sentMsg = await bot.sendMessage(chatId, text);
 
     const replyListener = async (replyMsg) => {
-      // Only consider replies to this menu and from same user
       if (
         replyMsg.chat.id === chatId &&
         replyMsg.reply_to_message?.message_id === sentMsg.message_id &&
@@ -847,13 +846,13 @@ module.exports = {
           fs.mkdirSync(path.dirname(filePath), { recursive: true });
         }
 
-        const loadingMsg = await bot.sendMessage(chatId, `⏳ Loading ${category.toUpperCase()}...`);
+        const loadingMsg = await bot.sendMessage(chatId, `⏳ LOADING ${category.toUpperCase()}...`);
 
         try {
           if (!fs.existsSync(filePath)) await downloadFile(filePath, videoURL);
 
           await bot.sendVideo(chatId, fs.createReadStream(filePath), {
-            caption: `✅ Here's your ${category.toUpperCase()}`,
+            caption: `${category.toUpperCase()} ✅`,
           });
 
           await bot.deleteMessage(chatId, loadingMsg.message_id);
