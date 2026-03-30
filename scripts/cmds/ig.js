@@ -5,18 +5,18 @@ module.exports = {
         author: "RAKIB MAHMUD",
         description: "Send Islamic post on /",
         category: "utility",
-        prefix: false // ❗ auto run করবে, আমরা ভিতরে check করবো
+        prefix: false // auto-run
     },
 
-    onStart: async function ({ bot, message, prefix }) {
-        const chatId = message.chat.id;
-        const messageId = message.message_id;
-        const text = message.text || "";
-
-        // ✅ শুধু "/" হলে run করবে
-        if (text.trim() !== prefix) return;
-
+    onStart: async function ({ bot, message }) {
         try {
+            const chatId = message.chat.id;
+            const messageId = message.message_id;
+            const text = message.text || "";
+
+            // শুধু "/" হলে run করবে
+            if (text.trim() !== "/") return;
+
             const data = [
                 {
                     caption: "🦋🥀࿐\nহাজারো স্বপ্নের শেষ স্থান কবরস্থান🙂🤲🥀",
@@ -28,15 +28,17 @@ module.exports = {
                 }
             ];
 
+            // র‍্যান্ডম ছবি নির্বাচন
             const random = data[Math.floor(Math.random() * data.length)];
 
+            // ছবি পাঠানো
             await bot.sendPhoto(chatId, random.img, {
                 caption: random.caption,
                 reply_to_message_id: messageId
             });
 
         } catch (error) {
-            console.error("Error:", error);
+            console.error("Error sending photo:", error);
         }
     }
 };
