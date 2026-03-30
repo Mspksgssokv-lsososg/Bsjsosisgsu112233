@@ -1,5 +1,9 @@
-// Islamic.js
-const config = require("./config");
+const path = require("path");
+const fs = require("fs");
+
+// Load config.json from project root
+const configPath = path.join(process.cwd(), "config.json");
+const config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
 
 module.exports = {
   config: {
@@ -9,7 +13,7 @@ module.exports = {
     author: config.author,
     description: "Random Islamic caption + photo & auto trigger on prefix",
     category: "fun",
-    usePrefix: true // auto trigger uses prefix
+    usePrefix: true
   },
 
   onStart: async function ({ bot, msg, chatId, event }) {
