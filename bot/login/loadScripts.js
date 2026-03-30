@@ -1,44 +1,55 @@
-const fs = require('fs');
-const path = require('path');
-const { loadScripts, RESTART_FILE } = require('./login/loadScripts');
-const { utils } = require('../func/utils.js');
+"use strict";
 
-const configPath = path.join(process.cwd(), 'config.json');
-const tokenPath = path.join(process.cwd(), 'token.txt');
+const { execSync } = require("child_process");
+const fs = require("fs");
+const path = require("path");
 
-if (!fs.existsSync(configPath) || !fs.existsSync(tokenPath)) {
-  console.error("Error: config.json or token.txt not found in the root directory.");
-  process.exit(1);
+const RESTART_CODE = 0;
+const RESTART_FILE = path.join(__dirname, "../../restart.json");
+
+function restartBot(chatId) {
+  if (chatId) {
+    fs.writeFileSync(RESTART_FILE, JSON.stringify({ chatId }));
+  }
+  console.log("Bot restarting now...");
+  process.exit(RESTART_CODE);
 }
 
-const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-const token = JSON.parse(fs.readFileSync(tokenPath, 'utf8'));
+exports.install = function () {
+  const originalRequire = module.constructor.prototype.require;
 
-global.config = {
-  ...config,
-  cmds: new Map(),
-  cooldowns: new Map(),
-  replies: new Map(),
-  callbacks: new Map(),
-  events: new Map()
+  module.constructor.prototype.require = function (moduleName) {
+    try {
+      return originalRequire.call(this, moduleName);
+    } catch (error) {
+      if (
+        error.code === "MODULE_NOT_FOUND" &&
+        !moduleName.startsWith(".") &&
+        !moduleName.startsWith("/")
+      ) {
+        console.log(`NPM module '${moduleName}' not found. Attempting to install...`);
+        try {
+          execSync(`npm install ${moduleName}`, {
+            stdio: "inherit",
+            cwd: process.cwd(),
+          });
+          console.log(`Successfully installed '${moduleName}'. Restarting bot...`);
+          restartBot();
+          return originalRequire.call(this, moduleName);
+        } catch (installError) {
+          console.error(`Failed to install '${moduleName}': ${installError.message}`);
+          throw installError;
+        }
+      }
+      throw error;
+    }
+  };
 };
 
-global.token = token;
-global.scripts = utils;
+exports.restartBot = restartBot;
+exports.RESTART_FILE = RESTART_FILE;
 
-utils();
-
-const { login } = require('./login/log');
-const botInstance = login();
-
-if (fs.existsSync(RESTART_FILE)) {
-  try {
-    const data = JSON.parse(fs.readFileSync(RESTART_FILE, 'utf8'));
-    if (data.chatId) {
-      botInstance.sendMessage(data.chatId, "✅ Bot restarted successfully.");
-    }
-  } catch (err) {
-    console.error("Failed to send restart confirmation:", err);
-  }
-  fs.unlinkSync(RESTART_FILE);
+if (!global.install) {
+  exports.install();
+  global.install = true;
 }
