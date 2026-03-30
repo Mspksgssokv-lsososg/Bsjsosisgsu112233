@@ -1,3 +1,5 @@
+const config = require('../config.json'); // এক ধাপ উপরে উঠে config.json নাও
+
 module.exports = {
     config: {
         name: 'start',
@@ -6,22 +8,21 @@ module.exports = {
         role: 0,
         cooldowns: 5,
         version: '1.0.0',
-        author: 'Samir Thakhuri',
+        author: config.owner.name,
         description: 'Start the bot',
         usage: 'start',
-        botName: 'MyBot'
+        botName: config.botName
     },
 
-    onStart: async function({ msg, bot, config }) {
+    onStart: async function({ msg, bot }) {
         const botName = config.botName || 'Bot';
         const welcomeMessage = `👋 Welcome to ${botName}! How can I help you today?`;
 
-        // Try multiple ways to send the message safely
         try {
             if (bot.sendMessage && msg.chat?.id) {
                 await bot.sendMessage(msg.chat.id, welcomeMessage, { replyToMessage: msg.message_id });
             } else if (bot.sendMessage) {
-                await bot.sendMessage(msg.from.id, welcomeMessage); // fallback
+                await bot.sendMessage(msg.from.id, welcomeMessage);
             } else {
                 console.error('bot.sendMessage is not defined');
             }
