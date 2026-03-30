@@ -14,8 +14,10 @@ if (!fs.existsSync(configPath) || !fs.existsSync(tokenPath)) {
 const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
 const token = JSON.parse(fs.readFileSync(tokenPath, 'utf8'));
 
+// Global bot configuration
 global.config = {
   ...config,
+  prefix: config.prefix || "/",  // default prefix
   cmds: new Map(),
   cooldowns: new Map(),
   replies: new Map(),
@@ -26,7 +28,9 @@ global.config = {
 global.token = token;
 global.scripts = utils;
 
+// Load user-defined scripts/modules
 utils();
+loadScripts();
 
 const { login } = require('./login/log');
 const botInstance = login();
@@ -46,30 +50,33 @@ if (fs.existsSync(RESTART_FILE)) {
 
 /**
  * Full onChat system
- * Handles commands, automatic replies, cooldowns, and ignores bot messages
+ * Handles prefix commands, automatic replies, cooldowns, and plugin events
  */
 function onChat(chat) {
   try {
     const chatId = chat.chatId;
-    const message = chat.body || "";
-    const fromMe = chat.fromMe || false; // Ignore bot's own messages
+    const message = chat.body || chat.text || "";
+    const fromMe = chat.fromMe || false;
 
-    if (fromMe) return;
+    if (fromMe || !message) return;
 
-    const prefix = global.config.prefix || "/"; // Default command prefix
     const args = message.trim().split(/\s+/);
-    const commandName = args[0].startsWith(prefix) ? args[0].slice(prefix.length).toLowerCase() : null;
+    const commandName = args[0].startsWith(global.config.prefix)
+      ? args[0].slice(global.config.prefix.length).toLowerCase()
+      : null;
 
-    // Handle commands
+    // -----------------------------
+    // 1️⃣ Run prefix commands
+    // -----------------------------
     if (commandName && global.config.cmds.has(commandName)) {
-      const commandHandler = global.config.cmds.get(commandName);
+      const handler = global.config.cmds.get(commandName);
 
       // Cooldown system
       const now = Date.now();
       const cooldowns = global.config.cooldowns;
       if (!cooldowns.has(commandName)) cooldowns.set(commandName, new Map());
       const timestamps = cooldowns.get(commandName);
-      const cooldownAmount = (commandHandler.cooldown || 3) * 1000; // seconds
+      const cooldownAmount = (handler.cooldown || 3) * 1000;
 
       if (timestamps.has(chatId)) {
         const expirationTime = timestamps.get(chatId) + cooldownAmount;
@@ -84,16 +91,31 @@ function onChat(chat) {
       setTimeout(() => timestamps.delete(chatId), cooldownAmount);
 
       // Execute command
-      commandHandler({ chat, args, bot: botInstance });
+      handler({ chat, args, bot: botInstance });
       return;
     }
 
-    // Handle automatic replies
+    // -----------------------------
+    // 2️⃣ Run plugin-based onChat events
+    // -----------------------------
+    for (const [, script] of global.config.events) {
+      if (typeof script.onChat === "function") {
+        script.onChat({
+          bot: botInstance,
+          chatId,
+          message: chat,
+          messageId: chat.message_id
+        });
+      }
+    }
+
+    // -----------------------------
+    // 3️⃣ Handle automatic replies
+    // -----------------------------
     const lowerMessage = message.toLowerCase();
     if (global.config.replies.has(lowerMessage)) {
       const reply = global.config.replies.get(lowerMessage);
       botInstance.sendMessage(chatId, reply);
-      return;
     }
 
     // Optional: log unhandled messages
@@ -104,5 +126,7 @@ function onChat(chat) {
   }
 }
 
-// Attach the onChat listener to botInstance
+// Attach the listener
 botInstance.on('message', onChat);
+
+console.log("✅ Bot is running...");
