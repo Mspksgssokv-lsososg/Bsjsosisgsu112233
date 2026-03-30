@@ -17,6 +17,7 @@
     "luxon": "^3.6.1",
     "moment-timezone": "^0.5.48",
     "mongodb": "^6.18.0",
+    "nayan-media-downloaders": "latest",
     "node-fetch": "^3.3.2",
     "node-telegram-bot-api": "^0.66.0",
     "supports-color": "^10.0.0",
