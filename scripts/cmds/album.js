@@ -783,34 +783,37 @@ const categories = {
   ],
 };
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 11;
 
 module.exports = {
   config: {
     name: "album",
+    version: "1.0.0",
     author: "SK-SIDDIK-KHAN",
-    description: "Send random videos from an album.",
-    category: "media",
-    usage: "/album [page]",
-    usePrefix: true,
+    countDown: 5,
+    role: 0,
+    category: "user",
   },
 
-  onStart: async ({ bot, chatId, args, userId }) => {
+  onStart: async function ({ api, event, message, args }) {
     const categoryKeys = Object.keys(categories);
     let page = 1;
 
     if (args.length > 0) {
-      const inputPage = parseInt(args[0]);
-      if (!isNaN(inputPage) && inputPage > 0) page = inputPage;
+      const inputPage = parseInt(args[0], 10);
+      if (!isNaN(inputPage) && inputPage > 0) {
+        page = inputPage;
+      }
     }
 
     const totalPages = Math.ceil(categoryKeys.length / PAGE_SIZE);
     if (page > totalPages) {
-      return bot.sendMessage(chatId, `❌ Page ${page} doesn't exist. Total pages: ${totalPages}`);
+      return message.reply(`❌ Page ${page} doesn't exist. Total pages: ${totalPages}`);
     }
 
     const startIndex = (page - 1) * PAGE_SIZE;
     const endIndex = startIndex + PAGE_SIZE;
+
     const currentPageCategories = categoryKeys.slice(startIndex, endIndex);
 
     let msg =
@@ -824,7 +827,7 @@ module.exports = {
       `\n┗━━━━[𝗦𝗜𝗗𝗗𝗜𝗞-𝗕𝗢𝗧]━━━━┛\n` +
       `\n☽━━━━━━━━━━━━━━━━━━☾\n           🔰 | 𝐏𝐚𝐠𝐞 [ ${page} / ${totalPages} ] 🔰\n☽━━━━━━━━━━━━━━━━━━☾`;
 
-    const sentMsg = await bot.sendMessage(chatId, text);
+    const sentMsg = await bot.sendMessage(chatId, msg);
 
     const replyListener = async (replyMsg) => {
       if (
