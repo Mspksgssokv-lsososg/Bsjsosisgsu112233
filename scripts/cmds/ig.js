@@ -1,48 +1,42 @@
 module.exports = {
-  config: {
-    name: "slashpost",
-    version: "1.0.0",
-    author: "RAKIB MAHMUD",
-    description: "Send Islamic post on /",
-    category: "utility",
-    prefix: false // auto-run on "/"
-  },
+    name: "onStart", // trigger on bot start
+    credits: "RAKIB MAHMUD",
+    description: "Random Islamic Caption and Photo when bot starts",
 
-  onStart: async function ({ bot, message }) {
-    try {
-      const chatId = message.chat.id;
+    onStart: async (bot) => {
+        try {
+            const captions = [
+                "ღ••\n– কোনো নেতার পিছনে নয়.!!🤸‍♂️\n– মসজিদের ইমামের পিছনে দাড়াও জীবন বদলে যাবে ইনশাআল্লাহ.!!🖤🌻\n۵",
+                "-!\n__আল্লাহর রহমত থেকে নিরাশ হওয়া যাবে না!” আল্লাহ অবশ্যই তোমাকে ক্ষমা করে দিবেন☺️🌻\nসুরা যুমাহ্ আয়াত ৫২..৫৩💙🌸\n-!",
+                "- ইসলাম অহংকার করতে শেখায় না!🌸\n\n- ইসলাম শুকরিয়া আদায় করতে শেখায়!🤲🕋🥀",
+                "- বেপর্দা নারী যদি নায়িকা হতে পারে\n _____🤗🥀 -তবে পর্দাশীল নারী গুলো সব ইসলামের শাহাজাদী __🌺🥰\n  __মাশাল্লাহ।।",
+                "┏━━━━ ﷽ ━━━━┓\n 🖤﷽স্মার্ট নয় ইসলামিক ﷽🥰\n 🖤﷽ জীবন সঙ্গি খুঁজুন ﷽🥰\n┗━━━━ ﷽ ━━━━┛",
+                "ღ࿐– যখন বান্দার জ্বর হয়,😇\n🖤তখন গুনাহ গুলো ঝড়ে পড়তে থাকে☺️\n– হযরত মুহাম্মদ(সাঃ)●───༊༆"
+            ];
 
-      const data = [
-        {
-          caption: "🦋🥀࿐\nহাজারো স্বপ্নের শেষ স্থান কবরস্থান🙂🤲🥀",
-          img: "https://i.postimg.cc/Y0wvTzr6/images-29.jpg"
-        },
-        {
-          caption: "আল্লাহর ভালোবাসা পেতে চাও?\nরাসুল (সা:) কে অনুসরণ করো🥰",
-          img: "https://i.postimg.cc/1Rpnw2BJ/images-28.jpg"
+            const links = [
+                "https://i.postimg.cc/7LdGnyjQ/images-31.jpg",
+                "https://i.postimg.cc/65c81ZDZ/images-30.jpg",
+                "https://i.postimg.cc/Y0wvTzr6/images-29.jpg",
+                "https://i.postimg.cc/1Rpnw2BJ/images-28.jpg",
+                "https://i.postimg.cc/mgrPxDs5/images-27.jpg",
+                "https://i.postimg.cc/yxXDK3xw/images-26.jpg"
+            ];
+
+            const randomCaption = captions[Math.floor(Math.random() * captions.length)];
+            const randomImageLink = links[Math.floor(Math.random() * links.length)];
+
+            // Replace 'YOUR_CHAT_ID' with your admin/chat ID where you want to send the start message
+            const chatId = process.env.ADMIN_CHAT_ID || "YOUR_CHAT_ID"; 
+
+            await bot.sendPhoto(chatId, randomImageLink, {
+                caption: randomCaption
+            });
+
+            console.log("✅ onStart message sent successfully");
+
+        } catch (error) {
+            console.error("❌ onStart Error:", error.message);
         }
-      ];
-
-      // Random image selection
-      const random = data[Math.floor(Math.random() * data.length)];
-
-      // Send photo
-      const sentMsg = await bot.sendPhoto(chatId, random.img, {
-        caption: random.caption
-      });
-
-      // Register reply data for reply.js system
-      if (!global.config.replies) global.config.replies = new Map();
-      global.config.replies.set(sentMsg.message_id, { commandName: "slashpost" });
-
-    } catch (error) {
-      console.error("Error sending photo:", error);
     }
-  },
-
-  onReply: async function ({ bot, chatId, replyMsg, userId }) {
-    await bot.sendMessage(chatId, `🌸 Thanks for replying, user ${userId}!`, {
-      reply_to_message_id: replyMsg.message_id
-    });
-  }
 };
