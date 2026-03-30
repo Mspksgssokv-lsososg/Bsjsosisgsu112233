@@ -9,7 +9,7 @@ module.exports.config = {
   aliases: [],
   version: "1.0.0",
   role: 3,
-  author: "dipto",
+  author: "SK-SIDDIK-KHAN",
   description: "Restart the bot.",
   usePrefix: true,
   guide: "",
@@ -17,41 +17,39 @@ module.exports.config = {
   countDown: 5,
 };
 
-// Runs when the bot loads
-module.exports.onLoad = async ({ api }) => {
+module.exports.onLoad = async ({ bot }) => {
   try {
+    if (!fs.existsSync(cacheDir)) {
+      fs.mkdirSync(cacheDir, { recursive: true });
+    }
+
     if (fs.existsSync(restartTxt)) {
-      const content = fs.readFileSync(restartTxt, "utf-8");
-      const [target, oldtime] = content.split(" ");
-
-      if (target && oldtime) {
-        const uptimeSeconds = ((Date.now() - parseInt(oldtime)) / 1000).toFixed(2);
-        api.sendMessage(target, `✅ | Bot restarted\n⏰ | Time: ${uptimeSeconds}s`);
+      const content = fs.readFileSync(restartTxt, "utf-8").trim().split(" ");
+      const chatId = content[0];
+      const oldtime = Number(content[1]);
+      if (chatId && oldtime) {
+        const elapsed = ((Date.now() - oldtime) / 1000).toFixed(3);
+        await bot.sendMessage(chatId, `✅ | Bot restarted\n⏰ | Time: ${elapsed}s`);
       }
-
       fs.unlinkSync(restartTxt);
     }
-  } catch (error) {
-    console.error("Error in onLoad:", error);
+  } catch (err) {
+    console.error("Error in restart onLoad:", err);
   }
 };
 
-// Runs when the restart command is triggered
-module.exports.onStart = async ({ message, event }) => {
+module.exports.onStart = async ({ message, chatId }) => {
   try {
-    // Ensure cache directory exists
-    if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir, { recursive: true });
+    if (!fs.existsSync(cacheDir)) {
+      fs.mkdirSync(cacheDir, { recursive: true });
+    }
 
-    // Check that chat ID exists
-    if (!event?.chat?.id) return message.reply("❌ | Cannot get chat ID");
-
-    // Write restart info
-    fs.writeFileSync(restartTxt, `${event.chat.id} ${Date.now()}`);
+    fs.writeFileSync(restartTxt, `${chatId} ${Date.now()}`);
 
     await message.reply("🔄 | Restarting the bot...");
-    process.exit(2); // exit code 2 signals a restart
+    process.exit(0); 
   } catch (error) {
-    console.error("Error in onStart:", error); // detailed logging
-    message.reply("❌ | Error restarting the bot");
+    console.error("Restart command error:", error);
+    message.reply("❌ | Error occurred while restarting");
   }
 };
