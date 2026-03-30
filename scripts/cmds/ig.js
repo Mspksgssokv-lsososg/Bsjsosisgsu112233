@@ -1,4 +1,7 @@
-const botConfig = require("../config.json"); // adjust path if needed
+const path = require("path");
+
+// config.json path root থেকে load
+const botConfig = require(path.join(process.cwd(), "config.json"));
 
 module.exports = {
     config: {
@@ -8,17 +11,19 @@ module.exports = {
         author: "RAKIB MAHMUD (fixed)",
         description: "Random Islamic caption + photo",
         category: "fun",
-        usePrefix: botConfig.prefix || "/", // <-- uses prefix from config.json
+        usePrefix: botConfig.prefix || "/" // config.json-এর prefix ব্যবহার করবে
     },
 
     onStart: async function ({ bot, msg, chatId }) {
         try {
+            // 🔥 Random captions
             const captions = [
                 "ღ••\n– কোনো নেতার পিছনে নয়.!!🤸‍♂️\n– মসজিদের ইমামের পিছনে দাড়াও জীবন বদলে যাবে ইনশাআল্লাহ.!!🖤🌻\n۵",
                 "-!\n__আল্লাহর রহমত থেকে নিরাশ হওয়া যাবে না!” আল্লাহ অবশ্যই তোমাকে ক্ষমা করে দিবেন☺️🌻\nসুরা যুমাহ্ আয়াত ৫২..৫৩💙🌸\n-!",
                 "- ইসলাম অহংকার করতে শেখায় না!🌸\n- ইসলাম শুকরিয়া আদায় করতে শেখায়!🤲🕋🥀"
             ];
 
+            // 🔥 Random image links
             const links = [
                 "https://i.postimg.cc/7LdGnyjQ/images-31.jpg",
                 "https://i.postimg.cc/65c81ZDZ/images-30.jpg",
@@ -28,6 +33,7 @@ module.exports = {
             const randomCaption = captions[Math.floor(Math.random() * captions.length)];
             const randomImageLink = links[Math.floor(Math.random() * links.length)];
 
+            // 📸 Photo পাঠানো
             await bot.sendPhoto(chatId, randomImageLink, {
                 caption: randomCaption
             });
