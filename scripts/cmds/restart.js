@@ -1,14 +1,14 @@
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
-const cacheDir = path.join(__dirname, 'Siddik');
-const restartTxt = path.join(cacheDir, 'restart.txt');
+const cacheDir = path.join(__dirname, "Siddik");
+const restartTxt = path.join(cacheDir, "restart.txt");
 
 module.exports.config = {
   name: "restart",
   aliases: [],
-  version: "1.0.0",
-  role: 3,
+  version: "1.0.1",
+  role: 3, // Admin
   author: "dipto",
   description: "Restart the bot.",
   usePrefix: true,
@@ -17,17 +17,21 @@ module.exports.config = {
   countDown: 5,
 };
 
-// Bot on load
+// Ensure cacheDir exists
+const ensureCacheDir = () => {
+  if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir, { recursive: true });
+};
+
+// Bot on load: notify restart if needed
 module.exports.onLoad = async ({ bot }) => {
   try {
-    if (!fs.existsSync(cacheDir)) {
-      fs.mkdirSync(cacheDir, { recursive: true });
-    }
+    ensureCacheDir();
 
     if (fs.existsSync(restartTxt)) {
-      const [chatId, oldtime] = fs.readFileSync(restartTxt, "utf-8").split(" ");
-      const elapsed = ((Date.now() - Number(oldtime)) / 1000).toFixed(3);
-      await bot.sendMessage(chatId, `✅ | Bot restarted\n⏰ | Time: ${elapsed}s`);
+      const content = fs.readFileSync(restartTxt, "utf-8").trim();
+      const [chatId, oldTime] = content.split(" ");
+      const elapsed = ((Date.now() - Number(oldTime)) / 1000).toFixed(2);
+      await bot.sendMessage(chatId, `✅ | Bot restarted!\n⏰ | Time: ${elapsed}s`);
       fs.unlinkSync(restartTxt);
     }
   } catch (err) {
@@ -38,17 +42,17 @@ module.exports.onLoad = async ({ bot }) => {
 // Restart command
 module.exports.onStart = async ({ message, chatId }) => {
   try {
-    if (!fs.existsSync(cacheDir)) {
-      fs.mkdirSync(cacheDir, { recursive: true });
-    }
+    ensureCacheDir();
 
-    // Save restart data (chatId instead of threadID)
+    // Save restart info for notification
     fs.writeFileSync(restartTxt, `${chatId} ${Date.now()}`);
 
     await message.reply("🔄 | Restarting the bot...");
-    process.exit(0); // 0 is normal exit code
-  } catch (error) {
-    console.error("Restart command error:", error);
+
+    // Exit process to let pm2 or another manager restart the bot
+    process.exit(0);
+  } catch (err) {
+    console.error("Restart command error:", err);
     message.reply("❌ | Error occurred while restarting");
   }
 };
