@@ -1,47 +1,44 @@
 const fs = require('fs');
 const path = require('path');
-const { login } = require('./login/log');
+const { loadScripts, RESTART_FILE } = require('./login/loadScripts');
 const { utils } = require('../func/utils.js');
 
-const config = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'config.json'), 'utf8'));
-const token = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'token.txt'), 'utf8'));
+const configPath = path.join(process.cwd(), 'config.json');
+const tokenPath = path.join(process.cwd(), 'token.txt');
 
-global.config = { ...config, cmds: new Map() };
+if (!fs.existsSync(configPath) || !fs.existsSync(tokenPath)) {
+  console.error("Error: config.json or token.txt not found in the root directory.");
+  process.exit(1);
+}
+
+const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+const token = JSON.parse(fs.readFileSync(tokenPath, 'utf8'));
+
+global.config = {
+  ...config,
+  cmds: new Map(),
+  cooldowns: new Map(),
+  replies: new Map(),
+  callbacks: new Map(),
+  events: new Map()
+};
+
 global.token = token;
 global.scripts = utils;
 
 utils();
 
-// load ig command
-const igCmd = require('./cmds/ig.js');
-global.config.cmds.set("ig", igCmd);
-global.config.cmds.set("/", igCmd); // 🔥 / trigger
-
+const { login } = require('./login/log');
 const botInstance = login();
 
-// polling `/` command only
-const POLL_INTERVAL = 1000;
-
-async function poll() {
+if (fs.existsSync(RESTART_FILE)) {
   try {
-    const updates = await botInstance.getUpdates?.() || [];
-
-    for (const msg of updates) {
-      if (!msg.text) continue;
-
-      const chatId = msg.chat.id;
-      const text = msg.text.trim();
-
-      if (text === "/") {
-        const command = global.config.cmds.get("/");
-        if (command) await command.onStart({ bot: botInstance, msg, chatId });
-      }
+    const data = JSON.parse(fs.readFileSync(RESTART_FILE, 'utf8'));
+    if (data.chatId) {
+      botInstance.sendMessage(data.chatId, "✅ Bot restarted successfully.");
     }
   } catch (err) {
-    console.error("Polling Error:", err);
-  } finally {
-    setTimeout(poll, POLL_INTERVAL);
+    console.error("Failed to send restart confirmation:", err);
   }
-}
-
-poll();
+  fs.unlinkSync(RESTART_FILE);
+  }
