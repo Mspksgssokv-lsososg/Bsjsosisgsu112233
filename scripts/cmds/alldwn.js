@@ -3,20 +3,19 @@ const { alldown } = require('nayan-media-downloaders');
 
 module.exports = {
   config: {
-    name: "alldwn",
-    author: "SK-SIDDIK-KHAN (Fixed by ChatGPT)",
+    name: "alldown",
+    author: "SK-SIDDIK-KHAN (Auto Modified)",
     description: "Auto Video Downloader",
     category: "media",
-    usage: "auto",
     usePrefix: false,
   },
 
-  onStart: async ({ bot, chatId, args, messageId }) => {
-    const link = args[0];
+  onChat: async ({ bot, chatId, message, messageId }) => {
+    const text = message?.text;
 
-    if (!link || !link.startsWith("http")) {
-      return bot.sendMessage(chatId, "❌ Please provide a valid url");
-    }
+    if (!text || !text.match(/https?:\/\/[^\s]+/)) return;
+
+    const link = text.match(/https?:\/\/[^\s]+/)[0];
 
     let waitMsg;
     try {
@@ -33,8 +32,8 @@ module.exports = {
       }
 
       const data = res.data;
-
       const videoUrl = data.high || data.low || data.url;
+
       if (!videoUrl) {
         throw new Error("No downloadable video found");
       }
