@@ -7,7 +7,6 @@ exports.word = async function ({ bot, message, msg, chatId }) {
 
   const text = msg.text.trim();
 
-  // Ignore prefixed commands
   if (text.startsWith(global.config.prefix)) return;
 
   const tokens = text.split(/\s+/);
@@ -28,7 +27,6 @@ exports.word = async function ({ bot, message, msg, chatId }) {
     }
   }
 
-  // Escape regex special chars
   const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
   for (const cmd of cmds.values()) {
