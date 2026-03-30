@@ -9,7 +9,7 @@ module.exports = {
         author: 'Samir Thakuri',
         description: 'Start the bot',
         usage: 'start',
-        botName: 'MyBot' // Add your bot's name here
+        botName: 'MyBots' // Add your bot's name here
     },
 
     onStart: async function({ msg, bot, config }) {
