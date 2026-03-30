@@ -4,31 +4,32 @@ const { alldown } = require('nayan-media-downloaders');
 module.exports = {
   config: {
     name: "alldown",
-    author: "SK-SIDDIK-KHAN (Auto Modified)",
+    author: "SK-SIDDIK-KHAN (Styled Fixed)",
     description: "Auto Video Downloader",
     category: "media",
+    usage: "auto",
     usePrefix: false,
   },
 
-  onChat: async ({ bot, chatId, message, messageId }) => {
-    const text = message?.text;
+  onStart: async ({ bot, chatId, args, messageId }) => {
+    const link = args[0];
 
-    if (!text || !text.match(/https?:\/\/[^\s]+/)) return;
-
-    const link = text.match(/https?:\/\/[^\s]+/)[0];
+    if (!link || !link.startsWith("http")) {
+      return bot.sendMessage(chatId, "❌ Please provide a valid url");
+    }
 
     let waitMsg;
     try {
       waitMsg = await bot.sendMessage(
         chatId,
-        "⏳ 𝗗𝗼𝘄𝗻𝗹𝗼𝗮𝗱𝗶𝗻𝗴 𝗣𝗹𝗲𝗮𝘀𝗲 𝗪𝗮𝗶𝘁...",
+        "⏳ 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗𝗜𝗡𝗚...\n━━━━━━━━━━━━━━━",
         { reply_to_message_id: messageId }
       );
 
       const res = await alldown(link);
 
       if (!res || !res.data) {
-        throw new Error("Invalid response from downloader API");
+        throw new Error("Invalid response from API");
       }
 
       const data = res.data;
@@ -47,18 +48,20 @@ module.exports = {
 
       const replyMarkup = {
         inline_keyboard: [
-          [{ text: "𝗖𝗢𝗡𝗧𝗔𝗖𝗧 𝗡𝗢𝗪", url: "https://t.me/busy1here" }]
+          [
+            { text: "📞 CONTACT ADMIN", url: "https://t.me/busy1here" }
+          ]
         ]
       };
 
       const caption = `
-╭─〔 MEDIA DOWNLOADER 〕─╮
+╭━━━〔 🎬 MEDIA DOWNLOADER 〕━━━╮
 ┃
-┃ 🎬 𝗧𝗶𝘁𝗹𝗲 : ${videoTitle}
-┃ ⚡ 𝗦𝘁𝗮𝘁𝘂𝘀 : ✅ Download Completed
-┃ 💡 𝗧𝗶𝗽 : Contact admin if any issue
+┃ 🎬 Title : ${videoTitle}
+┃ ⚡ Status : ✅ Completed
+┃ 💡 Tip : Contact admin if any issue
 ┃
-╰─〔 SIDDIK-BOT 〕─╯`;
+╰━━━〔 🤖 SIDDIK BOT 〕━━━╯`;
 
       if (waitMsg?.message_id) {
         await bot.deleteMessage(chatId, waitMsg.message_id).catch(() => {});
