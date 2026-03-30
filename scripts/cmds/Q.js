@@ -6,7 +6,7 @@ module.exports = {
         role: 0,
         cooldowns: 5,
         version: '1.0.0',
-        author: 'Samir Thakuri',
+        author: 'Samir Thakhuri',
         description: 'Start the bot',
         usage: 'start',
         botName: 'MyBot'
