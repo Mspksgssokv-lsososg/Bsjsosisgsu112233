@@ -1,6 +1,6 @@
 module.exports = {
     config: {
-        name: "//",
+        name: "se",
         version: "1.0.0",
         author: "RAKIB MAHMUD (fixed)",
         description: "Random Islamic caption + photo",
