@@ -1,10 +1,10 @@
 const fs = require('fs');
 const path = require('path');
-
+ 
 module.exports.config = {
     name: "help",
     version: "1.1",
-    author: "Dipto",
+    author: "SK-SIDDIK-KHAN",
     role: 0,
     usePrefix: true,
     description: "List all commands with details",
@@ -13,20 +13,17 @@ module.exports.config = {
     coolDowns: 5,
     premium: false
 };
-
+ 
 module.exports.onStart = async ({ event, args, message }) => {
     try {
-        // সব কমান্ড ফাইল লোড
         const commandFiles = fs.readdirSync(path.join(__dirname, '..', 'cmds')).filter(file => file.endsWith('.js'));
         const config = require('../../config.json');
-
-        // prefix config থেকে
+ 
         const prefix = config.prefix || "/";
-
+ 
         let categories = {};
         let totalCommands = 0;
-
-        // কমান্ড ক্যাটেগরি বানানো
+ 
         for (const file of commandFiles) {
             const command = require(path.join(__dirname, '..', 'cmds', file));
             if (command.config) {
@@ -37,7 +34,6 @@ module.exports.onStart = async ({ event, args, message }) => {
             }
         }
 
-        // যদি নির্দিষ্ট command এর help চাওয়া হয়
         if (args[0]) {
             if (args[0] === '-s' && args[1]) {
                 const searchLetter = args[1].toLowerCase();
@@ -45,30 +41,30 @@ module.exports.onStart = async ({ event, args, message }) => {
                 if (matchingCommands.length === 0) {
                     return message.reply(`No commands found starting with '${searchLetter}'.`);
                 }
-
+ 
                 let searchMessage = `✨ [ Commands Starting with '${searchLetter.toUpperCase()}' ] ✨\n\n`;
                 matchingCommands.forEach(cmd => (searchMessage += `✧ ${cmd.name}\n`));
                 return message.reply(searchMessage);
             }
-
+ 
             const commandName = args[0].toLowerCase();
             const command = Object.values(categories).flat().find(cmd => cmd.name === commandName || cmd.aliases?.includes(commandName));
-
+ 
             if (!command) {
                 return message.reply('❌ Command not found.');
             }
-
+ 
             let guide = command?.guide || command?.usages || 'No usage available';
             guide = guide.replace(/{pn}|{pm}|{p}|{prefix}|{name}/g, prefix + command?.name);
-
+ 
             if (args[1] === '-u') {
                 return message.reply(`📝 Usage for ${command.name}: ${guide}`);
             }
-
+ 
             if (args[1] === '-a') {
                 return message.reply(`🪶 Aliases for ${command.name}: ${command.aliases ? command.aliases.join(', ') : 'None'}`);
             }
-
+ 
             let commandInfo = `
 ╭──✦ [ Command: ${command.name.toUpperCase()} ]
 ├‣ 📜 Name: ${command.name}
@@ -80,28 +76,28 @@ module.exports.onStart = async ({ event, args, message }) => {
 ├‣ 🚩 Prefix Required: ${command.usePrefix ? 'Yes' : 'No'}
 ├‣ ⚜️ Premium: ${command.premium ? 'Yes' : 'No'}
 ╰───────────────◊`;
-
+ 
             return message.reply(commandInfo);
         }
-
-        // সব কমান্ডের লিস্ট দেখানো
+ 
         const page = parseInt(args[0], 10) || 1;
         const categoryKeys = Object.keys(categories);
         const totalPages = 1;
-
+ 
         let helpMessage = `✨ [ Help Menu - Page ${page} ] ✨\n\n`;
-
+ 
         for (const category of categoryKeys) {
             helpMessage += `╭──── [ ${category.toUpperCase()} ]\n`;
             helpMessage += `│ ✧ ${categories[category].map(cmd => cmd.name).join(' ✧ ')}\n`;
             helpMessage += `╰───────────────◊\n`;
         }
-
+ 
         helpMessage += `\n╭─『 ${config.owner.name}'s BOT 』\n╰‣ Total commands: ${totalCommands}\n╰‣ Page ${page} of ${totalPages}\n╰‣ Prefix: ${prefix}\n╰‣ Developer: ${config.owner.name}\n`;
-
+ 
         return message.reply(helpMessage);
     } catch (err) {
         console.error("❌ Error in help command:", err);
         return message.reply("❌ An error occurred while executing the help command.");
     }
 };
+ 
