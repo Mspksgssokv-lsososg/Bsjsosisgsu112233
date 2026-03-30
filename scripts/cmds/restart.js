@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const cacheDir = path.join(__dirname, 'caches');
+const cacheDir = path.join(__dirname, 'Siddik');
 const restartTxt = path.join(cacheDir, 'restart.txt');
 
 module.exports.config = {
