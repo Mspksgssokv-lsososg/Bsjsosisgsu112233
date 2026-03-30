@@ -23,7 +23,7 @@ module.exports = {
             const teamName = "VAI BROTHER ADDA";
             const authorFB = "https://m.me/SK.SIDDIK.HERE";
             const authortg = "https://t.me/busy1here";
-            const link = "https://i.imgur.com/5KuCPVq.jpeg";
+            const link = "https://files.catbox.moe/gct1ii.jpg";
 
             const now = moment().tz('Asia/Dhaka');
             const date = now.format('MMMM Do YYYY');
