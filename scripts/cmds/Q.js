@@ -9,20 +9,24 @@ module.exports = {
         author: 'Samir Thakuri',
         description: 'Start the bot',
         usage: 'start',
-        botName: 'MyBots' // Add your bot's name here
+        botName: 'MyBot'
     },
 
     onStart: async function({ msg, bot, config }) {
-        try {
-            // Fallback if botName is missing
-            const botName = config.botName || 'Bot';
-            const welcomeMessage = `👋 Welcome to ${botName}! How can I help you today?`;
+        const botName = config.botName || 'Bot';
+        const welcomeMessage = `👋 Welcome to ${botName}! How can I help you today?`;
 
-            // Send the welcome message as a reply
-            await bot.sendMessage(msg.chat.id, welcomeMessage, { replyToMessage: msg.message_id });
-        } catch (error) {
-            console.error('Error in start command:', error);
-            await bot.sendMessage(msg.chat.id, '⚠️ Something went wrong while starting the bot.', { replyToMessage: msg.message_id });
+        // Try multiple ways to send the message safely
+        try {
+            if (bot.sendMessage && msg.chat?.id) {
+                await bot.sendMessage(msg.chat.id, welcomeMessage, { replyToMessage: msg.message_id });
+            } else if (bot.sendMessage) {
+                await bot.sendMessage(msg.from.id, welcomeMessage); // fallback
+            } else {
+                console.error('bot.sendMessage is not defined');
+            }
+        } catch (err) {
+            console.error('Error sending start message:', err);
         }
     }
 };
