@@ -1,4 +1,4 @@
-name: Rakib-Bot
+name: SIDDIK_BOT
  
 on:
   push:
@@ -22,6 +22,7 @@ jobs:
       - name: Install dependencies
         run: npm install
  
-      - name: Start UCA_BOT
+      - name: Start SIDDIK_BOT
         run: npm start
+ 
  
