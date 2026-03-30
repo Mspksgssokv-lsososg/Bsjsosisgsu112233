@@ -31,6 +31,7 @@ utils();
 const { login } = require('./login/log');
 const botInstance = login();
 
+// Handle bot restart
 if (fs.existsSync(RESTART_FILE)) {
   try {
     const data = JSON.parse(fs.readFileSync(RESTART_FILE, 'utf8'));
@@ -43,36 +44,48 @@ if (fs.existsSync(RESTART_FILE)) {
   fs.unlinkSync(RESTART_FILE);
 }
 
-// ================== 🔥 / handler START ==================
-botInstance.on("message", async (msg) => {
+// ===============================================
+// 🔥 Custom message handler for `/` command
+// ===============================================
+
+// Polling interval (library independent)
+const POLL_INTERVAL = 1000; // 1 second
+
+async function pollMessages() {
   try {
-    const text = msg.text;
-    const chatId = msg.chat.id;
+    // Replace `getUpdates` with your library's fetch method if needed
+    const updates = await botInstance.getUpdates?.() || []; 
 
-    if (!text) return;
+    for (const msg of updates) {
+      if (!msg.text) continue;
+      const chatId = msg.chat.id;
+      const text = msg.text.trim();
 
-    // ✅ শুধু "/" দিলে ig command run
-    if (text.trim() === "/") {
-      const command = global.config.cmds.get("ig");
-      if (command) {
-        return command.onStart({ bot: botInstance, msg, chatId });
+      // ✅ Run `ig` command on `/`
+      if (text === "/") {
+        const igCmd = global.config.cmds.get("ig");
+        if (igCmd) {
+          await igCmd.onStart({ bot: botInstance, msg, chatId });
+        }
+        continue;
+      }
+
+      // ✅ Run other commands starting with `/`
+      if (text.startsWith("/")) {
+        const args = text.slice(1).split(/ +/);
+        const cmdName = args.shift().toLowerCase();
+        const command = global.config.cmds.get(cmdName);
+        if (command) {
+          await command.onStart({ bot: botInstance, msg, chatId, args });
+        }
       }
     }
-
-    // ✅ normal command system
-    if (!text.startsWith("/")) return;
-
-    const args = text.slice(1).trim().split(/ +/);
-    const cmdName = args.shift().toLowerCase();
-
-    const command = global.config.cmds.get(cmdName);
-
-    if (!command) return;
-
-    await command.onStart({ bot: botInstance, msg, chatId, args });
-
   } catch (err) {
-    console.error("💥 Command Error:", err);
+    console.error("💥 Polling Error:", err);
+  } finally {
+    setTimeout(pollMessages, POLL_INTERVAL);
   }
-});
-// ================== 🔥 / handler END ==================
+}
+
+// Start polling
+pollMessages();
