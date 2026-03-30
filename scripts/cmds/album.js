@@ -813,12 +813,11 @@ module.exports = {
     const endIndex = startIndex + PAGE_SIZE;
     const currentPageCategories = categoryKeys.slice(startIndex, endIndex);
 
-    let text = `
-╭─🎬 𝗔𝗹𝗯𝘂𝗺 𝗩𝗶𝗱𝗲𝗼𝘀 ─╮
-${currentPageCategories
-  .map((cat, i) => `┃ ${startIndex + i + 1}. ${cat.toUpperCase()}`)
-  .join("\n")}
-╰─Page [${page} / ${totalPages}]─╯`;
+    const text =
+    `╭─🎬 𝗔𝗹𝗯𝘂𝗺 𝗩𝗶𝗱𝗲𝗼𝘀 ─╮\n` +
+    currentPageCategories.map((cat, i) => `┃ ${startIndex + i + 1}. ${cat}`).join("\n") +
+    `\n╰─Page [${page} / ${totalPages}]─╯\n` +
+    `\nআপনার পছন্দের ভিডিও দেখতে রিপ্লাই করুন..🤙`;
 
     const sentMsg = await bot.sendMessage(chatId, text);
 
