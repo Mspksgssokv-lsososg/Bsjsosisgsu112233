@@ -4,36 +4,51 @@ const { alldown } = require('nayan-media-downloaders');
 module.exports = {
   config: {
     name: "alldwn",
-    author: "SK-SIDDIK-KHAN",
-    description: "Auto Video Downloader for any link",
+    author: "SK-SIDDIK-KHAN (Fixed by ChatGPT)",
+    description: "Auto Video Downloader",
     category: "media",
+    usage: "auto",
+    usePrefix: false,
   },
 
-  onMessage: async ({ bot, chatId, message, messageId }) => {
-    const text = message?.text;
-    if (!text || !text.includes("http")) return;
+  onStart: async ({ bot, chatId, args, messageId }) => {
+    const link = args[0];
 
-    const linkMatch = text.match(/https?:\/\/[^\s]+/g);
-    if (!linkMatch) return;
-    const link = linkMatch[0];
+    if (!link || !link.startsWith("http")) {
+      return bot.sendMessage(chatId, "❌ Please provide a valid url");
+    }
 
-    const waitMsg = await bot.sendMessage(chatId, "⏳ 𝗗𝗼𝘄𝗻𝗹𝗼𝗮𝗱𝗶𝗻𝗴 𝗣𝗹𝗲𝗮𝘀𝗲 𝗪𝗮𝗶𝘁", {
-      reply_to_message_id: messageId
-    });
-
+    let waitMsg;
     try {
+      waitMsg = await bot.sendMessage(
+        chatId,
+        "⏳ 𝗗𝗼𝘄𝗻𝗹𝗼𝗮𝗱𝗶𝗻𝗴 𝗣𝗹𝗲𝗮𝘀𝗲 𝗪𝗮𝗶𝘁...",
+        { reply_to_message_id: messageId }
+      );
+
       const res = await alldown(link);
-      const videoUrl = res.high || res.url || res.data?.high;
-      const videoTitle = res.title || "No Title Found";
 
-      if (!videoUrl) throw new Error("No downloadable video found");
+      if (!res || !res.data) {
+        throw new Error("Invalid response from downloader API");
+      }
 
-      const response = await axios.get(videoUrl, { responseType: "arraybuffer" });
-      const buffer = Buffer.from(response.data, "binary");
+      const data = res.data;
+
+      const videoUrl = data.high || data.low || data.url;
+      if (!videoUrl) {
+        throw new Error("No downloadable video found");
+      }
+
+      const videoTitle = data.title || "No Title Found";
+
+      const vidResponse = await axios.get(videoUrl, {
+        responseType: "stream",
+        timeout: 60000
+      });
 
       const replyMarkup = {
         inline_keyboard: [
-          [{ text: '𝗖𝗢𝗡𝗧𝗔𝗖𝗧 𝗡𝗢𝗪', url: 'https://t.me/busy1here' }]
+          [{ text: "𝗖𝗢𝗡𝗧𝗔𝗖𝗧 𝗡𝗢𝗪", url: "https://t.me/busy1here" }]
         ]
       };
 
@@ -46,21 +61,32 @@ module.exports = {
 ┃
 ╰─〔 SIDDIK-BOT 〕─╯`;
 
-      await bot.deleteMessage(chatId, waitMsg.message_id);
+      if (waitMsg?.message_id) {
+        await bot.deleteMessage(chatId, waitMsg.message_id).catch(() => {});
+      }
 
-      await bot.sendVideo(chatId, buffer, {
-        caption: caption,
+      await bot.sendVideo(chatId, vidResponse.data, {
+        caption,
         parse_mode: "Markdown",
         reply_to_message_id: messageId,
-        reply_markup: JSON.stringify(replyMarkup)
+        reply_markup: replyMarkup
       });
 
     } catch (error) {
-      console.error("Auto-download error:", error);
-      await bot.editMessageText(`❌ Error: ${error.message || "Failed to download."}`, {
-        chat_id: chatId,
-        message_id: waitMsg.message_id
-      });
+      console.error("Download error:", error);
+
+      const errorMsg = `❌ Error: ${error.message || "Failed to download."}`;
+
+      if (waitMsg?.message_id) {
+        await bot.editMessageText(errorMsg, {
+          chat_id: chatId,
+          message_id: waitMsg.message_id
+        }).catch(() => {
+          bot.sendMessage(chatId, errorMsg);
+        });
+      } else {
+        bot.sendMessage(chatId, errorMsg);
+      }
     }
   }
 };
