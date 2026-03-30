@@ -1,16 +1,23 @@
 module.exports = {
     config: {
         name: "ig",
-        aliases: ["/"], // / দিয়ে trigger হবে
+        aliases: [], // মেইন ফাইলের prefix/alias দরকার নেই
         version: "1.0.0",
         author: "RAKIB MAHMUD (fixed)",
         description: "Random Islamic caption + photo",
         category: "fun",
-        usePrefix: false
+        usePrefix: false // prefix মেইন ফাইল থেকে চেক হবে না
     },
 
     onStart: async function ({ bot, msg, chatId }) {
         try {
+            // message text না থাকলে return
+            if (!msg.text) return;
+
+            // শুধু '/' বা '/ig' হলে চালাবে
+            const text = msg.text.trim().toLowerCase();
+            if (text !== "/" && text !== "/ig") return;
+
             const captions = [
                 "ღ••\n– কোনো নেতার পিছনে নয়.!!🤸‍♂️\n– মসজিদের ইমামের পিছনে দাড়াও জীবন বদলে যাবে ইনশাআল্লাহ.!!🖤🌻\n۵",
                 "-!\n__আল্লাহর রহমত থেকে নিরাশ হওয়া যাবে না! আল্লাহ অবশ্যই তোমাকে ক্ষমা করে দিবেন☺️🌻\nসুরা যুমাহ্ আয়াত ৫২..৫৩💙🌸\n-!",
@@ -26,7 +33,6 @@ module.exports = {
             const randomCaption = captions[Math.floor(Math.random() * captions.length)];
             const randomImageLink = links[Math.floor(Math.random() * links.length)];
 
-            // 🔥 botInstance থেকে chatId দিয়ে photo পাঠানো
             await bot.sendPhoto(chatId, randomImageLink, { caption: randomCaption });
 
         } catch (error) {
