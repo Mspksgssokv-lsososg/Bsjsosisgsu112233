@@ -1,55 +1,65 @@
 "use strict";
 
-const { execSync } = require("child_process");
 const fs = require("fs");
 const path = require("path");
+const { execSync } = require("child_process");
 
-const RESTART_CODE = 0;
 const RESTART_FILE = path.join(__dirname, "../../restart.json");
 
 function restartBot(chatId) {
-  if (chatId) {
-    fs.writeFileSync(RESTART_FILE, JSON.stringify({ chatId }));
-  }
+  if (chatId) fs.writeFileSync(RESTART_FILE, JSON.stringify({ chatId }));
   console.log("Bot restarting now...");
-  process.exit(RESTART_CODE);
+  process.exit(0);
 }
 
-exports.install = function () {
+function loadScripts() {
+  const cmdsDir = path.join(process.cwd(), "commands");
+
+  if (!fs.existsSync(cmdsDir)) {
+    console.warn("Commands folder not found:", cmdsDir);
+    return;
+  }
+
+  const files = fs.readdirSync(cmdsDir).filter(f => f.endsWith(".js"));
+
+  for (const file of files) {
+    try {
+      const cmd = require(path.join(cmdsDir, file));
+      if (cmd.config?.name) {
+        global.config.cmds.set(cmd.config.name.toLowerCase(), cmd);
+        console.log(`[COMMAND LOADED] ${file}`);
+      } else {
+        console.warn(`[SKIP] ${file} missing config.name`);
+      }
+    } catch (err) {
+      console.error(`[ERROR] Failed to load ${file}: ${err.message}`);
+    }
+  }
+}
+
+// Auto npm install if module missing
+function installHook() {
   const originalRequire = module.constructor.prototype.require;
 
   module.constructor.prototype.require = function (moduleName) {
     try {
       return originalRequire.call(this, moduleName);
-    } catch (error) {
-      if (
-        error.code === "MODULE_NOT_FOUND" &&
-        !moduleName.startsWith(".") &&
-        !moduleName.startsWith("/")
-      ) {
-        console.log(`NPM module '${moduleName}' not found. Attempting to install...`);
-        try {
-          execSync(`npm install ${moduleName}`, {
-            stdio: "inherit",
-            cwd: process.cwd(),
-          });
-          console.log(`Successfully installed '${moduleName}'. Restarting bot...`);
-          restartBot();
-          return originalRequire.call(this, moduleName);
-        } catch (installError) {
-          console.error(`Failed to install '${moduleName}': ${installError.message}`);
-          throw installError;
-        }
+    } catch (err) {
+      if (err.code === "MODULE_NOT_FOUND" && !moduleName.startsWith(".") && !moduleName.startsWith("/")) {
+        console.log(`Installing missing module '${moduleName}'...`);
+        execSync(`npm install ${moduleName}`, { stdio: "inherit", cwd: process.cwd() });
+        console.log(`Installed '${moduleName}', restarting bot...`);
+        restartBot();
+        return originalRequire.call(this, moduleName);
       }
-      throw error;
+      throw err;
     }
   };
-};
-
-exports.restartBot = restartBot;
-exports.RESTART_FILE = RESTART_FILE;
+}
 
 if (!global.install) {
-  exports.install();
+  installHook();
   global.install = true;
 }
+
+module.exports = { loadScripts, restartBot, RESTART_FILE };
