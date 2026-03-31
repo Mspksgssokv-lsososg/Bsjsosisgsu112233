@@ -13,38 +13,50 @@ function restartBot(chatId) {
 }
 
 function loadScripts() {
-  const cmdsDir = path.join(process.cwd(), "commands");
+  const cmdsDir = path.join(process.cwd(), "cmds");
+  const eventsDir = path.join(process.cwd(), "events");
 
-  if (!fs.existsSync(cmdsDir)) {
-    console.warn("Commands folder not found:", cmdsDir);
-    return;
+  // Load commands
+  if (!fs.existsSync(cmdsDir)) console.warn("Commands folder not found:", cmdsDir);
+  else {
+    const cmdFiles = fs.readdirSync(cmdsDir).filter(f => f.endsWith(".js"));
+    for (const file of cmdFiles) {
+      try {
+        const cmd = require(path.join(cmdsDir, file));
+        if (cmd.config?.name) {
+          global.config.cmds.set(cmd.config.name.toLowerCase(), cmd);
+          console.log(`[COMMAND LOADED] ${file}`);
+        } else console.warn(`[SKIP] ${file} missing config.name`);
+      } catch (err) {
+        console.error(`[ERROR] Failed to load ${file}: ${err.message}`);
+      }
+    }
   }
 
-  const files = fs.readdirSync(cmdsDir).filter(f => f.endsWith(".js"));
-
-  for (const file of files) {
-    try {
-      const cmd = require(path.join(cmdsDir, file));
-      if (cmd.config?.name) {
-        global.config.cmds.set(cmd.config.name.toLowerCase(), cmd);
-        console.log(`[COMMAND LOADED] ${file}`);
-      } else {
-        console.warn(`[SKIP] ${file} missing config.name`);
+  // Load events
+  if (!fs.existsSync(eventsDir)) console.warn("Events folder not found:", eventsDir);
+  else {
+    const eventFiles = fs.readdirSync(eventsDir).filter(f => f.endsWith(".js"));
+    for (const file of eventFiles) {
+      try {
+        const ev = require(path.join(eventsDir, file));
+        if (ev.config?.name) {
+          global.config.events.set(ev.config.name.toLowerCase(), ev);
+          console.log(`[EVENT LOADED] ${file}`);
+        } else console.warn(`[SKIP] ${file} missing config.name`);
+      } catch (err) {
+        console.error(`[ERROR] Failed to load event ${file}: ${err.message}`);
       }
-    } catch (err) {
-      console.error(`[ERROR] Failed to load ${file}: ${err.message}`);
     }
   }
 }
 
-// Auto npm install if module missing
+// Auto npm install if missing
 function installHook() {
   const originalRequire = module.constructor.prototype.require;
-
   module.constructor.prototype.require = function (moduleName) {
-    try {
-      return originalRequire.call(this, moduleName);
-    } catch (err) {
+    try { return originalRequire.call(this, moduleName); }
+    catch (err) {
       if (err.code === "MODULE_NOT_FOUND" && !moduleName.startsWith(".") && !moduleName.startsWith("/")) {
         console.log(`Installing missing module '${moduleName}'...`);
         execSync(`npm install ${moduleName}`, { stdio: "inherit", cwd: process.cwd() });
@@ -57,9 +69,6 @@ function installHook() {
   };
 }
 
-if (!global.install) {
-  installHook();
-  global.install = true;
-}
+if (!global.install) { installHook(); global.install = true; }
 
 module.exports = { loadScripts, restartBot, RESTART_FILE };
